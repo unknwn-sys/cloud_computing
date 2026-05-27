@@ -6,6 +6,7 @@ from .core.config import settings
 from .core.rate_limit import limiter, rate_limit_handler
 from .api.v1.router import api_router
 from .db.session import Base, engine
+from . import models  # noqa: F401
 
 Base.metadata.create_all(bind=engine)
 

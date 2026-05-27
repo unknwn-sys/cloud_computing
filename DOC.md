@@ -444,6 +444,25 @@ CORS_ORIGINS=https://your-frontend-domain.com
 - Current code loads this value but only hard-codes `20/minute` on the upload endpoint.
 - Recommendation: wire this variable into endpoint decorators or central rate-limit config.
 
+`MAX_UPLOAD_SIZE_MB`
+
+- Maximum uploaded log file size accepted by the backend.
+- Current default is `10`.
+- Oversized files return HTTP `413`.
+
+```text
+MAX_UPLOAD_SIZE_MB=10
+```
+
+`ALLOWED_LOG_EXTENSIONS`
+
+- Comma-separated list of accepted log file extensions.
+- Current default supports `.log`, `.txt`, and `.json`.
+
+```text
+ALLOWED_LOG_EXTENSIONS=.log,.txt,.json
+```
+
 `NEXT_PUBLIC_API_BASE_URL`
 
 - Browser-visible API base URL.
@@ -545,19 +564,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Important issue found: `server/app/schemas/auth.py` imports `EmailStr`. Pydantic usually requires the extra package `email-validator` for `EmailStr`. If backend startup fails with an email validator error, install it:
-
-```bash
-pip install email-validator
-```
-
-Recommended permanent fix:
-
-```text
-email-validator==2.2.0
-```
-
-Add that line to `server/requirements.txt`.
+The backend requirements include `email-validator` for Pydantic `EmailStr` support and `alembic` for migration support.
 
 ### 5. Make Environment Available To Backend
 
@@ -844,19 +851,19 @@ Columns:
 
 ### Migration System
 
-No migration framework is installed.
+Alembic migration scaffolding is now included under `server/migrations`.
 
 Current behavior:
 
-- `server/app/main.py` calls `Base.metadata.create_all(bind=engine)`.
-- Missing tables are created automatically.
-- Existing columns are not altered automatically.
+- `server/app/main.py` still calls `Base.metadata.create_all(bind=engine)` so Railway deployments can bootstrap missing tables.
+- `server/migrations/versions/20260527_0001_enterprise_analytics.py` creates the normalized enterprise analytics tables.
+- Existing columns are not altered by `create_all`; use Alembic migrations for schema changes.
 
-Recommendation:
+Recommended production migration command from `server/`:
 
-- Add Alembic for production migrations.
-- Stop relying on `create_all` for schema changes after the first release.
-- Keep `database/schema.sql` updated as bootstrap documentation.
+```bash
+alembic upgrade head
+```
 
 ### Backup Instructions
 
@@ -2114,34 +2121,30 @@ Use this checklist before considering the project fully functional.
 
 These are project-specific findings from the repository inspection.
 
-1. `server/requirements.txt` is missing `email-validator`, but `server/app/schemas/auth.py` uses `EmailStr`.
-2. No automated tests are present.
-3. No CI/CD workflow files are present.
-4. No Alembic migration system is present.
-5. No `client/package-lock.json` is committed.
-6. Docker files exist, but local setup does not need Docker.
-7. `RATE_LIMIT_PER_MINUTE` is loaded but not used by the upload endpoint, which hard-codes `20/minute`.
-8. `client/middleware.ts` does not protect dashboard routes.
-9. JWT is stored in `localStorage`.
-10. Default admin credentials are documented for local seeding and must be changed before deployment.
-11. Upload validation only checks `.log` extension.
-12. No file size limit is enforced.
-13. Raw uploaded files are not retained, only summaries are stored.
-14. No background queue is implemented for long-running processing.
-15. `docs/api.md` is very minimal compared with the actual API behavior.
+1. No automated tests are present.
+2. No CI/CD workflow files are present.
+3. No `client/package-lock.json` is committed.
+4. Docker files exist, but local setup does not need Docker.
+5. `RATE_LIMIT_PER_MINUTE` is loaded but not used by the upload endpoint, which hard-codes `20/minute`.
+6. Raw uploaded files are not retained, only summaries are stored.
+7. No background queue is implemented for long-running processing.
+8. `docs/api.md` is very minimal compared with the actual API behavior.
+
+Resolved since the first documentation pass:
+
+- `email-validator` is now included in backend requirements.
+- Alembic migration scaffolding is now present.
+- Dashboard route protection and logout are implemented in the client.
+- Upload size and extension validation are implemented.
 
 ## Architecture And Security Improvements
 
 Recommended high-priority improvements:
 
-- Add `email-validator` to backend requirements.
-- Add Alembic migrations.
 - Add backend tests for auth, upload, dashboard, and MapReduce.
 - Add frontend build/test checks.
 - Commit `package-lock.json`.
 - Replace default admin credentials for production.
-- Add upload file size limits.
-- Add a real route protection strategy in the frontend.
 - Move JWT storage to a safer auth design using HTTP-only cookies.
 - Add role-based access control.
 - Add structured logging.
