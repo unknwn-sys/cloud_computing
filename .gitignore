@@ -17,3 +17,4 @@ server/.pytest_cache/
 # logs/uploads
 server/uploads/
 server/tmp/
+data.txt
