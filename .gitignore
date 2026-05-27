@@ -1,0 +1,19 @@
+# Node
+client/node_modules
+client/.next
+client/out
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+server/.pytest_cache/
+
+# Env
+.env
+*.env
+!.env.example
+
+# logs/uploads
+server/uploads/
+server/tmp/
