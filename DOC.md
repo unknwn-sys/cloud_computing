@@ -203,7 +203,7 @@ You said you do not have Docker, so this documentation treats Docker as optional
 `client/app/(auth)/login/page.tsx`
 
 - Login page.
-- Default form values are `admin@cloudlog.com` and `Admin@123`.
+- Renders empty email and password fields.
 - Calls `api('/auth/login')`.
 - Stores `access_token` in `localStorage` under the key `token`.
 
@@ -1315,7 +1315,7 @@ Recommendation:
 
 ### Security Gaps Found
 
-- Default admin credentials are documented and prefilled in the UI.
+- Default admin credentials are documented for local seeding and must be changed before deployment.
 - No password rotation or user management workflow.
 - JWT is stored in `localStorage`.
 - Upload validation only checks filename extension, not size or MIME/content.
@@ -2123,7 +2123,7 @@ These are project-specific findings from the repository inspection.
 7. `RATE_LIMIT_PER_MINUTE` is loaded but not used by the upload endpoint, which hard-codes `20/minute`.
 8. `client/middleware.ts` does not protect dashboard routes.
 9. JWT is stored in `localStorage`.
-10. Default admin credentials are prefilled in the login UI.
+10. Default admin credentials are documented for local seeding and must be changed before deployment.
 11. Upload validation only checks `.log` extension.
 12. No file size limit is enforced.
 13. Raw uploaded files are not retained, only summaries are stored.

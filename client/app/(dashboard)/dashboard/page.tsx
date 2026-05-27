@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import TrafficChart from '@/components/charts/TrafficChart';
 import { toast } from 'sonner';
@@ -18,6 +19,7 @@ type Upload = {
 };
 
 export default function Dashboard() {
+  const router = useRouter();
   const [data, setData] = useState<{
     uploads: Upload[];
     audit: any[];
@@ -27,15 +29,28 @@ export default function Dashboard() {
   });
 
   const [file, setFile] = useState<File | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   const load = () =>
     api('/analytics/dashboard')
-      .then(setData)
-      .catch(() => toast.error('Please login again'));
+      .then((dashboard) => {
+        setData(dashboard);
+        setIsReady(true);
+      })
+      .catch(() => {
+        localStorage.removeItem('token');
+        toast.error('Please login again');
+        router.replace('/login');
+      });
 
   useEffect(() => {
+    if (!localStorage.getItem('token')) {
+      router.replace('/login');
+      return;
+    }
+
     load();
-  }, []);
+  }, [router]);
 
   const upload = async () => {
     if (!file) return;
@@ -43,13 +58,19 @@ export default function Dashboard() {
     const form = new FormData();
     form.append('file', file);
 
-    await api('/logs/upload', {
-      method: 'POST',
-      body: form,
-    });
+    try {
+      await api('/logs/upload', {
+        method: 'POST',
+        body: form,
+      });
 
-    toast.success('Processed with MapReduce');
-    load();
+      toast.success('Processed with MapReduce');
+      load();
+    } catch {
+      localStorage.removeItem('token');
+      toast.error('Please login again');
+      router.replace('/login');
+    }
   };
 
   const latest = data.uploads[0]?.summary;
@@ -60,6 +81,10 @@ export default function Dashboard() {
         count,
       }))
     : [];
+
+  if (!isReady) {
+    return null;
+  }
 
   return (
     <main className='p-6 md:p-10 space-y-6'>
