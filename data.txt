@@ -1,0 +1,4 @@
+postgresql://neondb_owner:npg_30fFnYQISGZk@ep-patient-poetry-aqkhboo6.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require
+
+
+
